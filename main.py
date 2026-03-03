@@ -4,8 +4,7 @@ import platform
 import os
 import gc
 
-# 10 sizes x 20 iterations = 200 data points per device
-TEST_SIZES_MB = [0.001, 0.01, 0.1, 1, 8, 32, 128, 256, 512, 1024] 
+TEST_SIZES_MB = [0.001, 0.01, 0.1, 1, 8, 32, 128, 256, 512, 1024]
 ITERATIONS = 100
 FILENAME = f"bench_{platform.node()}_{int(time.time())}.csv"
 
@@ -29,15 +28,13 @@ def run_benchmark():
             mem_speed = size_mb / mem_duration if mem_duration > 0 else 0
 
             # --- 2. DISK (NON-VOLATILE) TEST ---
-            # We use a smaller subset for disk if the size is massive to save time, 
-            # but for your CW, keeping it consistent is better for stats.
             file_name = f"test_{i}.bin"
             disk_sample = os.urandom(min(size_bytes, 100 * 1024 * 1024)) # Cap at 100MB for disk speed
             
             start_disk = time.perf_counter()
             with open(file_name, "wb") as f:
                 f.write(disk_sample)
-                os.fsync(f.fileno()) # Force physical write
+                os.fsync(f.fileno())
             disk_duration = time.perf_counter() - start_disk
             os.remove(file_name)
             
@@ -57,7 +54,7 @@ def run_benchmark():
             
         print("Done.")
 
-    # Save to CSV - The 'keys' will now automatically include RAM and Disk speeds
+    # --- 4. Save to CSV ---
     if results:
         keys = results[0].keys()
         with open(FILENAME, 'w', newline='') as f:
