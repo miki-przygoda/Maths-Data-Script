@@ -1,68 +1,45 @@
 import time
-import csv
+import psutil
 import platform
-import os
-import gc
+import pandas as pd
 
-TEST_SIZES_MB = [0.001, 0.01, 0.1, 1, 8, 32, 128, 256, 512, 1024]
-ITERATIONS = 100
-FILENAME = f"bench_{platform.node()}_{int(time.time())}.csv"
-
-def run_benchmark():
+def collect_performance_data(iterations=200):
     results = []
-    print(f"Starting Master Benchmark on {platform.node()}...")
+    print(f"Starting data collection on {platform.node()}...")
 
-    for size_mb in TEST_SIZES_MB:
-        size_bytes = int(size_mb * 1024 * 1024)
-        print(f"Testing {size_mb} MB block...", end=" ", flush=True)
-
-        for i in range(ITERATIONS):
-            # --- 1. RAM/CACHE TEST ---
-            gc.collect()
-            start_mem = time.perf_counter()
-            data = bytearray(size_bytes)
-            # Simple write/read to exercise the memory
-            for j in range(0, size_bytes, 4096): data[j] = 1 
-            _ = sum(data)
-            mem_duration = time.perf_counter() - start_mem
-            mem_speed = size_mb / mem_duration if mem_duration > 0 else 0
-
-            # --- 2. DISK (NON-VOLATILE) TEST ---
-            file_name = f"test_{i}.bin"
-            disk_sample = os.urandom(min(size_bytes, 100 * 1024 * 1024)) # Cap at 100MB for disk speed
-            
-            start_disk = time.perf_counter()
-            with open(file_name, "wb") as f:
-                f.write(disk_sample)
-                os.fsync(f.fileno())
-            disk_duration = time.perf_counter() - start_disk
-            os.remove(file_name)
-            
-            disk_speed = (len(disk_sample) / (1024*1024)) / disk_duration
-
-            # --- 3. LOGGING EVERYTHING ---
-            results.append({
-                "Device": platform.node(),
-                "OS": platform.system(),
-                "Block_Size_MB": size_mb,
-                "Iteration": i + 1,
-                "RAM_Speed_MBs": round(mem_speed, 2),
-                "Disk_Speed_MBs": round(disk_speed, 2),
-                "Latency_ms": round((mem_duration / max(1, size_bytes/1024)) * 1000, 6)
-            })
-            del data
-            
-        print("Done.")
-
-    # --- 4. Save to CSV ---
-    if results:
-        keys = results[0].keys()
-        with open(FILENAME, 'w', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=keys)
-            writer.writeheader()
-            writer.writerows(results)
+    battery_info = psutil.sensors_battery()
+    power_source = "Charger" if (battery_info is None or battery_info.power_plugged) else "Battery"
     
-    print(f"\nCSV Generated: {FILENAME}")
+    for i in range(iterations):
+        cpu_usage = psutil.cpu_percent(interval=0.1)
+        ram_available = psutil.virtual_memory().available / (1024 * 1024) # MB
+        
+        start_time = time.perf_counter()
+        _ = [x**2 for x in range(1000000)]
+        end_time = time.perf_counter()
 
-if __name__ == "__main__":
-    run_benchmark()
+        battery = psutil.sensors_battery()
+        power_plugged = battery.power_plugged if battery else True
+        process_count = len(psutil.pids())
+        
+        exec_time = (end_time - start_time) * 1000
+        
+        results.append({
+            'Member_Name': platform.node(),
+            'OS_Type': platform.system(),
+            'Trial': i + 1,
+            'CPU_Usage_Pct': cpu_usage,
+            'RAM_Free_MB': ram_available,
+            'Clock_Speed_GHz': psutil.cpu_freq().current / 1000 if psutil.cpu_freq() else 0,
+            'Execution_Time_ms': exec_time,
+            'Power_Plugged': 1 if power_plugged else 0,
+            'Process_Count': process_count,
+        })
+        time.sleep(0.1) # Brief pause between trials
+        
+    df = pd.DataFrame(results)
+    output_file = f"data_{platform.node()}_{power_source}.csv"
+    df.to_csv(output_file, index=False)
+    print(f"Success! File saved as {output_file}")
+
+collect_performance_data()
