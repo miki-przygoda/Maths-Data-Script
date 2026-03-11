@@ -35,7 +35,7 @@ def collect_performance_data(iterations=200):
             'Power_Plugged': 1 if power_plugged else 0,
             'Process_Count': process_count,
         })
-        time.sleep(0.1) # Brief pause between trials
+        time.sleep(0.1)
         
     df = pd.DataFrame(results)
     output_file = f"data_{platform.node()}_{power_source}.csv"
