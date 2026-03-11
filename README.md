@@ -50,3 +50,7 @@ The script creates a CSV file in the project root with your device name and powe
 - You can vary the runs in some way you think is interesting but just note that when you send me the data, if you do both runs on the charger and on battery try to keep the runs moderetly similar between one another, so dont open new apps or new tabs on your browser
 
 - If you need any extra help with running it just send me a message or again email me and Ill try to get back to you as soon as I can to help.
+
+- The type of data it collects is:
+Member_Name, OS_Type, Trial,CPU_Usage_Pct, RAM_Free_MB, Clock_Speed_GHz, Execution_Time_ms, Power_Plugged, Process_Count
+
