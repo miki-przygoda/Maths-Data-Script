@@ -3,3 +3,9 @@
 *.csv
 /data
 .DS_Store
+/.idea
+Cargo.lock
+Cargo.toml
+*.toml
+/src
+/target
