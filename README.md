@@ -27,7 +27,7 @@ venv\Scripts\Activate.ps1
 ### 3. Install required libraries
 
 ```bash
-pip install pandas psutil
+pip install pandas psutil scikit-learn seaborn matplotlib
 ```
 
 ## Run the script
